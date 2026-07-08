@@ -8,14 +8,14 @@ from ultralytics import YOLO
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train YOLO on a construction/manufacturing defect dataset.")
-    parser.add_argument("--data", default="datasets/defects.yaml", help="Path to YOLO dataset YAML.")
-    parser.add_argument("--model", default="yolo11n.pt", help="Base model or checkpoint.")
-    parser.add_argument("--epochs", type=int, default=80)
-    parser.add_argument("--imgsz", type=int, default=960)
+    parser.add_argument("--data", default="datasets/crack-seg.yaml", help="Path to YOLO dataset YAML.")
+    parser.add_argument("--model", default="yolo11n-seg.pt", help="Base model or checkpoint.")
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--batch", type=int, default=8)
     parser.add_argument("--device", default=None, help="Device string such as 0, cpu, or mps.")
     parser.add_argument("--project", default="runs/defect-detection")
-    parser.add_argument("--name", default="yolo-defects")
+    parser.add_argument("--name", default="yolo-crack-seg")
     return parser.parse_args()
 
 
@@ -41,4 +41,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

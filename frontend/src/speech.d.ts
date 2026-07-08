@@ -3,6 +3,11 @@ interface Window {
   webkitSpeechRecognition?: typeof SpeechRecognition;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
 declare var SpeechRecognition: {
   prototype: SpeechRecognition;
   new (): SpeechRecognition;
@@ -22,4 +27,3 @@ interface SpeechRecognition extends EventTarget {
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
 }
-

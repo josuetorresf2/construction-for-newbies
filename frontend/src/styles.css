@@ -132,6 +132,38 @@ video,
   gap: 16px;
 }
 
+.app-header {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #303840;
+  padding-bottom: 14px;
+}
+
+.app-header span,
+.app-header strong {
+  display: block;
+}
+
+.app-header span {
+  color: #f2c94c;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.app-header strong {
+  margin-top: 3px;
+  font-size: 1.15rem;
+}
+
+.install-button {
+  min-width: 112px;
+  background: #e7edf3;
+}
+
 .status {
   border-radius: 8px;
   padding: 14px;
@@ -271,8 +303,16 @@ meter {
     display: grid;
   }
 
+  .app-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .install-button {
+    width: 100%;
+  }
+
   .detections div {
     grid-template-columns: 88px 1fr 42px;
   }
 }
-

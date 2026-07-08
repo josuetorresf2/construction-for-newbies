@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Mic, MicOff, Play, ShieldAlert, Volume2 } from "lucide-react";
+import { Camera, Download, Mic, MicOff, Play, ShieldAlert, Volume2 } from "lucide-react";
 
 type Detection = {
   label: string;
@@ -44,6 +44,8 @@ function App() {
   const [listening, setListening] = useState(false);
   const [autoScan, setAutoScan] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
 
   const drawDetections = useCallback((detections: Detection[]) => {
     const video = videoRef.current;
@@ -156,11 +158,39 @@ function App() {
     recognition.start();
   };
 
+  const installApp = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome === "accepted") {
+      setInstalled(true);
+      setInstallPrompt(null);
+    }
+  };
+
   useEffect(() => {
     if (!autoScan || !cameraReady) return;
     const id = window.setInterval(() => void analyzeFrame(), 1800);
     return () => window.clearInterval(id);
   }, [analyzeFrame, autoScan, cameraReady]);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const handleInstalled = () => {
+      setInstalled(true);
+      setInstallPrompt(null);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, []);
 
   const risk = analysis?.summary.risk ?? "clear";
 
@@ -194,6 +224,17 @@ function App() {
         </div>
 
         <aside className="consultant">
+          <div className="app-header">
+            <div>
+              <span>Constructor AI</span>
+              <strong>Field inspection app</strong>
+            </div>
+            <button className="install-button" onClick={() => void installApp()} disabled={!installPrompt || installed}>
+              <Download size={18} />
+              {installed ? "Installed" : "Install"}
+            </button>
+          </div>
+
           <div className={`status ${risk}`}>
             <ShieldAlert size={22} />
             <div>
@@ -245,4 +286,3 @@ function App() {
 }
 
 export default App;
-

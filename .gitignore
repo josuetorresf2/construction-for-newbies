@@ -8,7 +8,8 @@ dist/
 backend/uploads/
 models/*.pt
 models/*.onnx
+datasets/crack-seg/
+datasets/crack-seg.zip
 runs/
 .env
 .DS_Store
-
