@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+node_modules/
+dist/
+backend/uploads/
+models/*.pt
+models/*.onnx
+runs/
+.env
+.DS_Store
+

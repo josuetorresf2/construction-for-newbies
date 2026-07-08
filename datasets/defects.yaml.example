@@ -1,0 +1,12 @@
+path: datasets/defects
+train: images/train
+val: images/val
+
+names:
+  0: crack
+  1: spalling
+  2: corrosion
+  3: deformation
+  4: exposed_rebar
+  5: delamination
+
