@@ -13,3 +13,4 @@ datasets/crack-seg.zip
 runs/
 .env
 .DS_Store
+.vercel

@@ -6,7 +6,9 @@ Developer: **Joshue Torres**
 
 ## Live Demo
 
-- Frontend: https://josuetorresf2.github.io/construction-for-newbies/
+- Primary frontend: https://josuetorresf2.github.io/construction-for-newbies/
+- Root mirror: https://josuetorresf2.github.io/
+- Vercel mirror: https://construction-for-newbies.vercel.app/
 - Backend API: deploy with the Render blueprint in this repo, then set the GitHub repository variable `VITE_API_BASE` to the deployed API URL.
 
 The GitHub Pages frontend is public and installable as a PWA. Full AI detection requires a deployed backend because YOLO inference runs server-side.
