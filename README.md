@@ -14,9 +14,13 @@ Inspection tools tray:
 
 ![Construction for Newbies inspection tools tray](docs/screenshots/app-tools.png)
 
-Built-in demo detection:
+Built-in easy example detection:
 
-![Construction for Newbies demo crack detection](docs/screenshots/app-demo-detection.png)
+![Construction for Newbies easy crack detection](docs/screenshots/app-easy-detection.png)
+
+Built-in hard example detection:
+
+![Construction for Newbies hard crack detection](docs/screenshots/app-hard-detection.png)
 
 ## What this repo contains
 
@@ -120,7 +124,7 @@ VITE_API_BASE=http://127.0.0.1:8000 npm run dev
 1. Start the backend and frontend using the commands above.
 2. Confirm the app says `crack model online`.
 3. Tap the floating sliders icon to open the inspection tools tray.
-4. Choose `Try demo image` to prove the model works without needing a camera.
+4. Choose `Easy example` or `Hard example` to prove the model works without needing a camera.
 5. Choose `Start camera` for webcam inspection, or `Upload image` to analyze a photo.
 6. Use `Analyze frame` to run YOLO on the current camera frame.
 7. Enable `Live scan` to analyze the camera feed repeatedly.
@@ -150,7 +154,20 @@ Example questions:
 - Speaker icon: reads the latest answer aloud.
 - Home icon: clears the current inspection state.
 - Camera icon in the top bar: starts the camera.
-- `Try demo image`: loads a bundled real crack sample and runs the same YOLO detection pipeline.
+- `Easy example`: loads an obvious crack sample and runs the same YOLO detection pipeline.
+- `Hard example`: loads a more complex real-world crack sample and runs the same YOLO detection pipeline.
+
+## Bundled example images
+
+The app includes two web-sourced example images so users can verify the model immediately:
+
+- Easy example: `Retaining wall failure.jpeg` from Wikimedia Commons, courtesy of G.R. Fisher, U.S. Geological Survey.
+- Hard example: `Concrete wall cracking as its steel reinforcing cracks and swells 9061v.jpg` from Wikimedia Commons by JonRichfield.
+
+Sources:
+
+- https://commons.wikimedia.org/wiki/File:Retaining_wall_failure.jpeg
+- https://commons.wikimedia.org/wiki/File:Concrete_wall_cracking_as_its_steel_reinforcing_cracks_and_swells_9061v.jpg
 
 ## Camera access
 

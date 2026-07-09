@@ -53,7 +53,8 @@ const copy = {
     readyAnswer: "I am ready to inspect.",
     startCamera: "Start camera",
     uploadImage: "Upload image",
-    tryDemo: "Try demo image",
+    easyExample: "Easy example",
+    hardExample: "Hard example",
     analyze: "Analyze frame",
     liveScan: "Live scan",
     settings: "Settings",
@@ -88,7 +89,8 @@ const copy = {
     readyAnswer: "Estoy listo para inspeccionar.",
     startCamera: "Iniciar camara",
     uploadImage: "Subir imagen",
-    tryDemo: "Probar imagen demo",
+    easyExample: "Ejemplo facil",
+    hardExample: "Ejemplo dificil",
     analyze: "Analizar imagen",
     liveScan: "Escaneo en vivo",
     settings: "Ajustes",
@@ -253,9 +255,9 @@ function App() {
     reader.readAsDataURL(file);
   };
 
-  const analyzeDemoImage = async () => {
+  const analyzeExampleImage = async (difficulty: "easy" | "hard") => {
     setToolsOpen(false);
-    const response = await fetch("/demo/crack-sample.jpg");
+    const response = await fetch(`/demo/${difficulty}-crack.jpg`);
     const blob = await response.blob();
     const reader = new FileReader();
     reader.onload = () => {
@@ -445,9 +447,13 @@ function App() {
                     setToolsOpen(false);
                   }} />
                 </label>
-                <button className="menu-row" onClick={() => void analyzeDemoImage()}>
+                <button className="menu-row" onClick={() => void analyzeExampleImage("easy")}>
                   <ImageUp size={18} />
-                  <span>{t.tryDemo}</span>
+                  <span>{t.easyExample}</span>
+                </button>
+                <button className="menu-row" onClick={() => void analyzeExampleImage("hard")}>
+                  <ImageUp size={18} />
+                  <span>{t.hardExample}</span>
                 </button>
                 <button className="menu-row" onClick={() => {
                   void analyzeFrame();
