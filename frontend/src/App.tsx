@@ -61,7 +61,8 @@ const copy = {
     spanish: "Spanish",
     modelOnline: "crack model online",
     fallback: "smoke-test mode",
-    modelLoaded: "model loaded",
+    modelStatusTitle: "Constructor AI Vision",
+    modelStatus: "Crack detection is online.",
     welcomeFirst: "Hello, I am your construction inspection AI.",
     welcomeBack: "Welcome back. I remember this device has used Constructor AI before.",
     instructions: "Open the tools icon to start the camera or upload a surface photo. I will mark cracks, summarize the risk, and answer your questions.",
@@ -95,7 +96,8 @@ const copy = {
     spanish: "Espanol",
     modelOnline: "modelo de grietas activo",
     fallback: "modo de prueba",
-    modelLoaded: "modelo cargado",
+    modelStatusTitle: "Vision Constructor AI",
+    modelStatus: "La deteccion de grietas esta activa.",
     welcomeFirst: "Hola, soy tu IA de inspeccion de construccion.",
     welcomeBack: "Bienvenido de nuevo. Recuerdo que este dispositivo ya uso Constructor AI.",
     instructions: "Abre el icono de herramientas para iniciar la camara o subir una foto. Marcare grietas, resumire el riesgo y respondere tus preguntas.",
@@ -356,7 +358,6 @@ function App() {
 
   const risk = analysis?.summary.risk ?? "clear";
   const defectTrained = analysis?.defectTrained ?? modelHealth?.defectTrained ?? false;
-  const modelName = analysis?.model ?? modelHealth?.model ?? "checking model";
   const detectionCount = analysis?.detections.length ?? 0;
   const defectCount = analysis?.summary.defectCount ?? 0;
   const t = copy[language];
@@ -485,8 +486,8 @@ function App() {
               <div className="chat-row ai named">
                 <div className="avatar gray">?</div>
                 <div>
-                  <span className="sender">{t.modelLoaded}: {modelName}</span>
-                  <p>{t.instructions}</p>
+                  <span className="sender">{t.modelStatusTitle}</span>
+                  <p>{defectTrained ? `${t.modelStatus} ${t.instructions}` : t.instructions}</p>
                 </div>
               </div>
               {question && (
