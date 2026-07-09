@@ -1,5 +1,11 @@
 const CACHE_NAME = "constructor-ai-v1";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const APP_SCOPE = new URL(self.registration.scope);
+const APP_SHELL = [
+  APP_SCOPE.pathname,
+  `${APP_SCOPE.pathname}manifest.webmanifest`,
+  `${APP_SCOPE.pathname}icons/icon-192.png`,
+  `${APP_SCOPE.pathname}icons/icon-512.png`,
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
@@ -23,10 +29,9 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (event.request.mode === "navigate") {
-    event.respondWith(fetch(event.request).catch(() => caches.match("/")));
+    event.respondWith(fetch(event.request).catch(() => caches.match(APP_SCOPE.pathname)));
     return;
   }
 
   event.respondWith(caches.match(event.request).then((cached) => cached ?? fetch(event.request)));
 });
-

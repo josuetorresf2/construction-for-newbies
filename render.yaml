@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: construction-for-newbies-api
+    env: docker
+    plan: starter
+    dockerfilePath: backend/Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: YOLO_MODEL_PATH
+        value: models/best.pt

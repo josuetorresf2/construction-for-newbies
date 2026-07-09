@@ -42,7 +42,8 @@ type ModelHealth = {
 
 type Language = "en" | "es";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+const configuredApiBase = import.meta.env.VITE_API_BASE;
+const API_BASE = configuredApiBase || (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:8000" : "");
 
 const copy = {
   en: {
@@ -79,6 +80,7 @@ const copy = {
     tools: "Inspection tools",
     voiceUnavailable: "Voice recognition is not available in this browser. Try Chrome or Edge.",
     cameraError: "Camera could not start. Check browser permissions, camera access, and HTTPS requirements outside localhost.",
+    backendUnavailable: "Backend is not connected yet. Deploy the API and set VITE_API_BASE to enable live AI detection online.",
   },
   es: {
     appTitle: "ConstructorAI-iPhone-17-Pro",
@@ -114,6 +116,7 @@ const copy = {
     tools: "Herramientas de inspeccion",
     voiceUnavailable: "El reconocimiento de voz no esta disponible en este navegador. Prueba Chrome o Edge.",
     cameraError: "No se pudo iniciar la camara. Revisa permisos del navegador, acceso a la camara y HTTPS fuera de localhost.",
+    backendUnavailable: "El backend todavia no esta conectado. Despliega la API y configura VITE_API_BASE para activar la deteccion online.",
   },
 } satisfies Record<Language, Record<string, string>>;
 
@@ -207,6 +210,11 @@ function App() {
   };
 
   const analyzeImageData = useCallback(async (image: string) => {
+    if (!API_BASE) {
+      setAnswer(copy[language].backendUnavailable);
+      setBusy(false);
+      return;
+    }
     try {
       const response = await fetch(`${API_BASE}/api/analyze-frame`, {
         method: "POST",
@@ -255,6 +263,10 @@ function App() {
 
   const askConsultant = useCallback(
     async (text: string) => {
+      if (!API_BASE) {
+        setAnswer(copy[language].backendUnavailable);
+        return;
+      }
       const response = await fetch(`${API_BASE}/api/consult`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -328,6 +340,10 @@ function App() {
   }, [analyzeFrame, autoScan, cameraReady]);
 
   useEffect(() => {
+    if (!API_BASE) {
+      setModelHealth({ ok: false, model: "not configured", defectTrained: false });
+      return;
+    }
     fetch(`${API_BASE}/api/health`)
       .then((response) => response.json())
       .then((payload: ModelHealth) => setModelHealth(payload))
