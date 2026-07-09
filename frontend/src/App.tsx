@@ -1,22 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Camera,
-  CheckCircle2,
   Download,
   Home,
   ImageUp,
-  Lock,
   Mic,
   MicOff,
-  Newspaper,
   Play,
   Plus,
   RefreshCw,
   Send,
+  Settings,
   ShieldAlert,
   SlidersHorizontal,
-  Users,
-  Video,
   Volume2,
 } from "lucide-react";
 
@@ -44,7 +40,68 @@ type ModelHealth = {
   defectTrained: boolean;
 };
 
+type Language = "en" | "es";
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+
+const copy = {
+  en: {
+    appTitle: "ConstructorAI-iPhone-17-Pro",
+    os: "inspection OS 1.0",
+    defaultQuestion: "Do you see cracks or structural defects?",
+    readyAnswer: "Start the camera or upload a surface photo, then ask about cracks.",
+    startCamera: "Start camera",
+    uploadImage: "Upload image",
+    analyze: "Analyze frame",
+    liveScan: "Live scan",
+    settings: "Settings",
+    language: "Language",
+    english: "English",
+    spanish: "Spanish",
+    modelOnline: "crack model online",
+    fallback: "smoke-test mode",
+    modelLoaded: "model loaded",
+    inspector: "Inspector",
+    risk: "Risk",
+    noFlags: "no defect flag in the current frame",
+    defectFlag: "defect flag visible",
+    defectFlags: "defect flags visible",
+    ready: "ready",
+    askLabel: "Ask Constructor AI",
+    ask: "Ask",
+    voice: "Voice",
+    speak: "Speak answer",
+    voiceUnavailable: "Voice recognition is not available in this browser. Try Chrome or Edge.",
+  },
+  es: {
+    appTitle: "ConstructorAI-iPhone-17-Pro",
+    os: "sistema de inspeccion 1.0",
+    defaultQuestion: "Ves grietas o defectos estructurales?",
+    readyAnswer: "Inicia la camara o sube una foto de la superficie, luego pregunta por grietas.",
+    startCamera: "Iniciar camara",
+    uploadImage: "Subir imagen",
+    analyze: "Analizar imagen",
+    liveScan: "Escaneo en vivo",
+    settings: "Ajustes",
+    language: "Idioma",
+    english: "Ingles",
+    spanish: "Espanol",
+    modelOnline: "modelo de grietas activo",
+    fallback: "modo de prueba",
+    modelLoaded: "modelo cargado",
+    inspector: "Inspector",
+    risk: "Riesgo",
+    noFlags: "sin alertas de defecto en la imagen actual",
+    defectFlag: "alerta de defecto visible",
+    defectFlags: "alertas de defecto visibles",
+    ready: "listo",
+    askLabel: "Preguntar a Constructor AI",
+    ask: "Preguntar",
+    voice: "Voz",
+    speak: "Leer respuesta",
+    voiceUnavailable: "El reconocimiento de voz no esta disponible en este navegador. Prueba Chrome o Edge.",
+  },
+} satisfies Record<Language, Record<string, string>>;
 
 const SpeechRecognitionCtor =
   window.SpeechRecognition ?? window.webkitSpeechRecognition;
@@ -65,8 +122,10 @@ function App() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [modelHealth, setModelHealth] = useState<ModelHealth | null>(null);
-  const [question, setQuestion] = useState("Do you see cracks or structural defects?");
-  const [answer, setAnswer] = useState("Start the camera or upload a surface photo, then ask about cracks.");
+  const [language, setLanguage] = useState<Language>("en");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [question, setQuestion] = useState(copy.en.defaultQuestion);
+  const [answer, setAnswer] = useState(copy.en.readyAnswer);
   const [cameraReady, setCameraReady] = useState(false);
   const [listening, setListening] = useState(false);
   const [autoScan, setAutoScan] = useState(false);
@@ -121,7 +180,7 @@ function App() {
       const response = await fetch(`${API_BASE}/api/analyze-frame`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image, confidence: 0.35 }),
+        body: JSON.stringify({ image, confidence: 0.35, language }),
       });
       if (!response.ok) throw new Error(await response.text());
       const nextAnalysis = (await response.json()) as Analysis;
@@ -133,7 +192,7 @@ function App() {
     } finally {
       setBusy(false);
     }
-  }, [drawDetections]);
+  }, [drawDetections, language]);
 
   const analyzeFrame = useCallback(async () => {
     const video = videoRef.current;
@@ -172,24 +231,25 @@ function App() {
           question: text,
           detections: analysis?.detections ?? [],
           defectTrained: analysis?.defectTrained ?? modelHealth?.defectTrained ?? false,
+          language,
         }),
       });
       const payload = (await response.json()) as { answer: string };
       setAnswer(payload.answer);
       speak(payload.answer);
     },
-    [analysis, modelHealth]
+    [analysis, language, modelHealth]
   );
 
   const startListening = () => {
     if (!SpeechRecognitionCtor) {
-      const message = "Voice recognition is not available in this browser. Try Chrome or Edge.";
+      const message = copy[language].voiceUnavailable;
       setAnswer(message);
       speak(message);
       return;
     }
     const recognition = new SpeechRecognitionCtor();
-    recognition.lang = "en-US";
+    recognition.lang = language === "es" ? "es-ES" : "en-US";
     recognition.interimResults = false;
     recognition.continuous = false;
     recognition.onstart = () => setListening(true);
@@ -201,6 +261,20 @@ function App() {
     };
     recognitionRef.current = recognition;
     recognition.start();
+  };
+
+  const changeLanguage = (nextLanguage: Language) => {
+    setLanguage(nextLanguage);
+    setQuestion(copy[nextLanguage].defaultQuestion);
+    setAnswer(copy[nextLanguage].readyAnswer);
+  };
+
+  const resetApp = () => {
+    setAnalysis(null);
+    setPreviewImage(null);
+    setAutoScan(false);
+    setQuestion(t.defaultQuestion);
+    setAnswer(t.readyAnswer);
   };
 
   const installApp = async () => {
@@ -249,7 +323,11 @@ function App() {
   const modelName = analysis?.model ?? modelHealth?.model ?? "checking model";
   const detectionCount = analysis?.detections.length ?? 0;
   const defectCount = analysis?.summary.defectCount ?? 0;
-  const confidenceLabel = analysis?.detections[0] ? `${(analysis.detections[0].confidence * 100).toFixed(0)}%` : "ready";
+  const t = copy[language];
+  const confidenceLabel = analysis?.detections[0] ? `${(analysis.detections[0].confidence * 100).toFixed(0)}%` : t.ready;
+  const riskText = defectCount
+    ? `${defectCount} ${defectCount === 1 ? t.defectFlag : t.defectFlags}`
+    : t.noFlags;
 
   return (
     <main className="stage">
@@ -262,11 +340,11 @@ function App() {
             <span className="green" />
           </div>
           <div className="window-title">
-            <strong>ConstructorAI-iPhone-17-Pro</strong>
-            <span>inspection OS 1.0</span>
+            <strong>{t.appTitle}</strong>
+            <span>{t.os}</span>
           </div>
           <div className="window-actions">
-            <button aria-label="Home"><Home size={18} /></button>
+            <button aria-label="Home" onClick={resetApp}><Home size={18} /></button>
             <button aria-label="Camera" onClick={startCamera}><Camera size={18} /></button>
             <button aria-label="Install app" onClick={() => void installApp()} disabled={!installPrompt || installed}>
               <Download size={18} />
@@ -291,32 +369,41 @@ function App() {
             </button>
 
             <div className="glass-menu">
-              <button className="menu-row active" onClick={() => void askConsultant("Do you see cracks?")}>
-                <CheckCircle2 size={17} />
-                <span>Mesh</span>
+              <button className="menu-row active" onClick={startCamera}>
+                <Camera size={18} />
+                <span>{t.startCamera}</span>
               </button>
               <label className="menu-row file-row">
-                <Newspaper size={17} />
-                <span>Feed</span>
+                <ImageUp size={18} />
+                <span>{t.uploadImage}</span>
                 <input type="file" accept="image/*" onChange={(event) => {
                   const file = event.target.files?.[0];
                   if (file) analyzeUploadedImage(file);
                   event.currentTarget.value = "";
                 }} />
               </label>
-              <button className="menu-row" onClick={startCamera}>
-                <Users size={18} />
-                <span>Crowd</span>
-              </button>
               <button className="menu-row" onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
-                <Video size={18} />
-                <span>Live</span>
+                <Play size={18} />
+                <span>{t.analyze}</span>
               </button>
               <label className="menu-row toggle-row">
                 <SlidersHorizontal size={18} />
-                <span>Control</span>
+                <span>{t.liveScan}</span>
                 <input type="checkbox" checked={autoScan} onChange={(event) => setAutoScan(event.target.checked)} />
               </label>
+              <button className="menu-row" onClick={() => setSettingsOpen((open) => !open)}>
+                <Settings size={18} />
+                <span>{t.settings}</span>
+              </button>
+              {settingsOpen && (
+                <div className="settings-panel">
+                  <span>{t.language}</span>
+                  <div className="language-buttons">
+                    <button className={language === "en" ? "selected" : ""} onClick={() => changeLanguage("en")}>{t.english}</button>
+                    <button className={language === "es" ? "selected" : ""} onClick={() => changeLanguage("es")}>{t.spanish}</button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className={`lens-card ${cameraReady || previewImage ? "active" : "idle"}`}>
@@ -329,21 +416,21 @@ function App() {
                 <canvas ref={overlayRef} className="overlay" />
                 {!cameraReady && !previewImage && (
                   <button className="start-camera" onClick={startCamera}>
-                    <Camera size={18} /> Start camera
+                    <Camera size={18} /> {t.startCamera}
                   </button>
                 )}
               </div>
               <canvas ref={canvasRef} hidden />
               <div className={`lens-chip ${risk}`}>
                 <ShieldAlert size={14} />
-                <span>{defectTrained ? "crack model online" : "smoke-test mode"}</span>
+                <span>{defectTrained ? t.modelOnline : t.fallback}</span>
               </div>
             </div>
 
             <div className="chat-stream">
               <div className="chat-row ai">
                 <div className="avatar blue">AI</div>
-                <p>model loaded: {modelName}</p>
+                <p>{t.modelLoaded}: {modelName}</p>
               </div>
               <div className="chat-row user">
                 <p>{question}</p>
@@ -352,27 +439,27 @@ function App() {
               <div className="chat-row ai named">
                 <div className="avatar gray">C</div>
                 <div>
-                  <span className="sender">Crackline</span>
+                  <span className="sender">{t.inspector}</span>
                   <p>{answer}</p>
                 </div>
               </div>
               <div className="chat-row ai named">
                 <div className="avatar crimson">R</div>
                 <div>
-                  <span className="sender">Risk mesh</span>
-                  <p>{defectCount ? `${defectCount} defect flag${defectCount === 1 ? "" : "s"} visible` : "no defect flag in the current frame"}</p>
+                  <span className="sender">{t.risk}</span>
+                  <p>{riskText}</p>
                 </div>
               </div>
               <div className="chat-row user compact">
-                <p>{detectionCount ? `${detectionCount} detections / ${confidenceLabel}` : "ready"}</p>
+                <p>{detectionCount ? `${detectionCount} detections / ${confidenceLabel}` : t.ready}</p>
                 <div className="avatar face">JT</div>
               </div>
             </div>
 
             <div className="composer">
-              <input value={question} onChange={(event) => setQuestion(event.target.value)} aria-label="Ask Constructor AI" />
+              <input value={question} onChange={(event) => setQuestion(event.target.value)} aria-label={t.askLabel} />
               <div className="composer-actions">
-                <button aria-label="Upload image" className="round-button add" type="button">
+                <button aria-label={t.uploadImage} className="round-button add" type="button">
                   <label>
                     <Plus size={18} />
                     <input type="file" accept="image/*" onChange={(event) => {
@@ -382,19 +469,16 @@ function App() {
                     }} />
                   </label>
                 </button>
-                <button aria-label="Analyze frame" className="round-button" onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
+                <button aria-label={t.analyze} className="round-button" onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
                   <Play size={17} />
                 </button>
-                <button aria-label="Lock" className="round-button" type="button">
-                  <Lock size={16} />
-                </button>
-                <button aria-label="Voice" className="round-button mic" onClick={startListening} disabled={listening}>
+                <button aria-label={t.voice} className="round-button mic" onClick={startListening} disabled={listening}>
                   {listening ? <MicOff size={18} /> : <Mic size={18} />}
                 </button>
-                <button aria-label="Ask" className="round-button send" onClick={() => void askConsultant(question)}>
+                <button aria-label={t.ask} className="round-button send" onClick={() => void askConsultant(question)}>
                   <Send size={17} />
                 </button>
-                <button aria-label="Speak answer" className="round-button" onClick={() => speak(answer)}>
+                <button aria-label={t.speak} className="round-button" onClick={() => speak(answer)}>
                   <Volume2 size={17} />
                 </button>
               </div>

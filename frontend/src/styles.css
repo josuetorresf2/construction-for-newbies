@@ -249,10 +249,10 @@ button:disabled {
   left: 38px;
   z-index: 7;
   width: min(414px, calc(100% - 96px));
-  padding: 26px 34px;
+  padding: 22px 30px;
   border-radius: 34px;
   display: grid;
-  gap: 22px;
+  gap: 17px;
   background: rgba(32, 32, 32, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.11);
   box-shadow: inset 0 0 34px rgba(255, 255, 255, 0.035), 0 28px 70px rgba(0, 0, 0, 0.74);
@@ -283,6 +283,44 @@ button:disabled {
 .file-row,
 .toggle-row {
   cursor: pointer;
+}
+
+.settings-panel {
+  margin-top: 2px;
+  padding: 14px;
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-panel > span {
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.language-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.language-buttons button {
+  min-height: 36px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.language-buttons button.selected {
+  color: #050505;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .lens-card {
@@ -601,8 +639,8 @@ video,
   .glass-menu {
     left: 22px;
     width: min(300px, calc(100% - 72px));
-    padding: 20px 24px;
-    gap: 16px;
+    padding: 18px 22px;
+    gap: 13px;
     border-radius: 28px;
   }
 

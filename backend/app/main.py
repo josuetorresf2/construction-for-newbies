@@ -22,6 +22,7 @@ app.add_middleware(
 class FrameRequest(BaseModel):
     image: str = Field(min_length=32)
     confidence: float = Field(default=0.35, ge=0.05, le=0.95)
+    language: str = Field(default="en", pattern="^(en|es)$")
 
 
 class DetectionPayload(BaseModel):
@@ -34,6 +35,7 @@ class ConsultRequest(BaseModel):
     question: str = Field(default="")
     detections: list[DetectionPayload] = Field(default_factory=list)
     defectTrained: bool = False
+    language: str = Field(default="en", pattern="^(en|es)$")
 
 
 @app.get("/api/health")
@@ -66,6 +68,7 @@ def analyze_frame(payload: FrameRequest) -> dict[str, object]:
     summary = summarize_detections(
         [Detection(label=item["label"], confidence=item["confidence"]) for item in detections],
         defect_trained=analyzer.defect_trained,
+        language=payload.language,
     )
     return {
         "detections": detections,
@@ -86,5 +89,6 @@ def consult(payload: ConsultRequest) -> dict[str, str]:
             payload.question,
             detections,
             defect_trained=payload.defectTrained,
+            language=payload.language,
         )
     }

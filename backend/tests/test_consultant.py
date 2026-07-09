@@ -21,3 +21,9 @@ def test_consultant_answers_crack_question() -> None:
     assert "possible crack" in answer
     assert "74%" in answer
 
+
+def test_consultant_answers_spanish_crack_question() -> None:
+    answer = answer_question("Ves grietas?", [Detection("crack", 0.81)], defect_trained=True, language="es")
+
+    assert "posible grieta" in answer
+    assert "81%" in answer
