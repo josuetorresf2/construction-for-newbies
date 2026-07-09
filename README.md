@@ -2,6 +2,22 @@
 
 AI construction and manufacturing defect consultant for webcam or uploaded video frames. The app combines Ultralytics YOLO detection with browser voice recognition and speech synthesis so a user can ask what the camera sees and get a spoken inspection summary.
 
+Developer: **Joshue Torres**
+
+## Screenshots
+
+Default inspection chat:
+
+![Construction for Newbies default app screen](docs/screenshots/app-default.png)
+
+Inspection tools tray:
+
+![Construction for Newbies inspection tools tray](docs/screenshots/app-tools.png)
+
+Built-in demo detection:
+
+![Construction for Newbies demo crack detection](docs/screenshots/app-demo-detection.png)
+
 ## What this repo contains
 
 - `backend/`: FastAPI service for YOLO frame analysis and defect-consultant responses.
@@ -91,11 +107,54 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL, allow camera and microphone permissions, then ask questions like:
+Open the Vite URL shown by Vite, usually `http://127.0.0.1:5173` or `http://127.0.0.1:5174`.
+
+If the frontend is not using the default backend port, start it with:
+
+```bash
+VITE_API_BASE=http://127.0.0.1:8000 npm run dev
+```
+
+## How to use the app
+
+1. Start the backend and frontend using the commands above.
+2. Confirm the app says `crack model online`.
+3. Tap the floating sliders icon to open the inspection tools tray.
+4. Choose `Try demo image` to prove the model works without needing a camera.
+5. Choose `Start camera` for webcam inspection, or `Upload image` to analyze a photo.
+6. Use `Analyze frame` to run YOLO on the current camera frame.
+7. Enable `Live scan` to analyze the camera feed repeatedly.
+8. Type a question in the bottom message box and press the send icon.
+9. Use the microphone icon to ask by voice.
+10. Use the speaker icon to hear the latest answer spoken aloud.
+11. Open `Settings` from the tools tray to switch between English and Spanish.
+
+The message input starts empty. The assistant shows a hello message and short instructions inside the chat instead of pre-filling a user message. The app remembers whether the current device has used it before and remembers the selected language using browser local storage.
+
+Example questions:
 
 - "Do you see cracks?"
 - "Is there a structural defect?"
 - "What should I inspect next?"
+- "Ves grietas?"
+- "Que debo inspeccionar ahora?"
+
+## App controls
+
+- Floating sliders icon: opens and closes inspection tools.
+- Refresh icon: analyzes the current camera frame when the camera is active.
+- Plus icon: uploads an image from the chat composer.
+- Play icon: analyzes the current frame.
+- Microphone icon: starts voice input.
+- Send icon: asks the AI consultant.
+- Speaker icon: reads the latest answer aloud.
+- Home icon: clears the current inspection state.
+- Camera icon in the top bar: starts the camera.
+- `Try demo image`: loads a bundled real crack sample and runs the same YOLO detection pipeline.
+
+## Camera access
+
+Camera access requires browser permission. Localhost works during development. Production deployments should use HTTPS, otherwise browsers may block camera and microphone APIs. If camera startup fails, the app shows a message in the chat instead of failing silently.
 
 ## Install it like an app
 
