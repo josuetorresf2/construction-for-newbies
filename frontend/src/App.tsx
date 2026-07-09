@@ -1,5 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Download, ImageUp, Mic, MicOff, Play, ShieldAlert, Volume2 } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  Download,
+  Home,
+  ImageUp,
+  Lock,
+  Mic,
+  MicOff,
+  Newspaper,
+  Play,
+  Plus,
+  RefreshCw,
+  Send,
+  ShieldAlert,
+  SlidersHorizontal,
+  Users,
+  Video,
+  Volume2,
+} from "lucide-react";
 
 type Detection = {
   label: string;
@@ -47,7 +66,7 @@ function App() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [modelHealth, setModelHealth] = useState<ModelHealth | null>(null);
   const [question, setQuestion] = useState("Do you see cracks or structural defects?");
-  const [answer, setAnswer] = useState("Start the camera, then ask about cracks, defects, or next inspection steps.");
+  const [answer, setAnswer] = useState("Start the camera or upload a surface photo, then ask about cracks.");
   const [cameraReady, setCameraReady] = useState(false);
   const [listening, setListening] = useState(false);
   const [autoScan, setAutoScan] = useState(false);
@@ -72,14 +91,14 @@ function App() {
 
     detections.forEach((detection) => {
       const [x1, y1, x2, y2] = detection.box;
-      const color = detection.label.includes("crack") ? "#ff4d4d" : "#f8c537";
+      const color = detection.label.includes("crack") ? "#ff595e" : "#ffb23f";
       context.strokeStyle = color;
       context.fillStyle = color;
       context.strokeRect(x1, y1, x2 - x1, y2 - y1);
       const label = `${detection.label} ${(detection.confidence * 100).toFixed(0)}%`;
       const textWidth = context.measureText(label).width + 14;
       context.fillRect(x1, Math.max(0, y1 - 28), textWidth, 28);
-      context.fillStyle = "#101114";
+      context.fillStyle = "#050505";
       context.fillText(label, x1 + 7, Math.max(20, y1 - 8));
     });
   }, [previewImage]);
@@ -228,110 +247,160 @@ function App() {
   const risk = analysis?.summary.risk ?? "clear";
   const defectTrained = analysis?.defectTrained ?? modelHealth?.defectTrained ?? false;
   const modelName = analysis?.model ?? modelHealth?.model ?? "checking model";
+  const detectionCount = analysis?.detections.length ?? 0;
+  const defectCount = analysis?.summary.defectCount ?? 0;
+  const confidenceLabel = analysis?.detections[0] ? `${(analysis.detections[0].confidence * 100).toFixed(0)}%` : "ready";
 
   return (
-    <main>
-      <section className="workspace">
-        <div className="camera-panel">
-          <div className="video-wrap">
-            {previewImage ? (
-              <img ref={imageRef} src={previewImage} alt="Uploaded inspection target" onLoad={() => drawDetections(analysis?.detections ?? [])} />
-            ) : (
-              <video ref={videoRef} playsInline muted />
-            )}
-            <canvas ref={overlayRef} className="overlay" />
-            {!cameraReady && !previewImage && (
-              <button className="start-camera" onClick={startCamera}>
-                <Camera size={22} /> Start camera
-              </button>
-            )}
+    <main className="stage">
+      <div className="sim-dot" />
+      <section className="sim-shell" aria-label="Constructor AI simulator">
+        <div className="sim-window">
+          <div className="window-lights" aria-hidden="true">
+            <span className="red" />
+            <span className="yellow" />
+            <span className="green" />
           </div>
-          <canvas ref={canvasRef} hidden />
-          <div className="toolbar">
-            <button onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
-              <Play size={18} /> Analyze frame
-            </button>
-            <label className="upload-button">
-              <ImageUp size={18} />
-              Upload image
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) analyzeUploadedImage(file);
-                  event.currentTarget.value = "";
-                }}
-              />
-            </label>
-            <label className="switch">
-              <input type="checkbox" checked={autoScan} onChange={(event) => setAutoScan(event.target.checked)} />
-              <span>Live scan</span>
-            </label>
-            <button onClick={startListening} disabled={listening}>
-              {listening ? <MicOff size={18} /> : <Mic size={18} />}
-              {listening ? "Listening" : "Ask by voice"}
+          <div className="window-title">
+            <strong>ConstructorAI-iPhone-17-Pro</strong>
+            <span>inspection OS 1.0</span>
+          </div>
+          <div className="window-actions">
+            <button aria-label="Home"><Home size={18} /></button>
+            <button aria-label="Camera" onClick={startCamera}><Camera size={18} /></button>
+            <button aria-label="Install app" onClick={() => void installApp()} disabled={!installPrompt || installed}>
+              <Download size={18} />
             </button>
           </div>
         </div>
 
-        <aside className="consultant">
-          <div className="app-header">
-            <div>
-              <span>Constructor AI</span>
-              <strong>Field inspection app</strong>
+        <div className="phone-frame">
+          <div className="phone-side left-top" />
+          <div className="phone-side left-mid" />
+          <div className="phone-side right-mid" />
+          <div className="phone-screen">
+            <div className="statusbar">
+              <strong>4:56</strong>
+              <span>••••</span>
+              <span className="wifi">⌁</span>
+              <span className="battery" />
             </div>
-            <button className="install-button" onClick={() => void installApp()} disabled={!installPrompt || installed}>
-              <Download size={18} />
-              {installed ? "Installed" : "Install"}
+
+            <button className="refresh-float" aria-label="Analyze current frame" onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
+              <RefreshCw size={22} />
             </button>
-          </div>
 
-          <div className={`status ${risk}`}>
-            <ShieldAlert size={22} />
-            <div>
-              <strong>{analysis?.summary.headline ?? "Camera inspection consultant"}</strong>
-              <span>
-                {defectTrained
-                  ? `Crack model active: ${modelName}`
-                  : "Custom defect model missing. Running in smoke-test mode."}
-              </span>
+            <div className="glass-menu">
+              <button className="menu-row active" onClick={() => void askConsultant("Do you see cracks?")}>
+                <CheckCircle2 size={17} />
+                <span>Mesh</span>
+              </button>
+              <label className="menu-row file-row">
+                <Newspaper size={17} />
+                <span>Feed</span>
+                <input type="file" accept="image/*" onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) analyzeUploadedImage(file);
+                  event.currentTarget.value = "";
+                }} />
+              </label>
+              <button className="menu-row" onClick={startCamera}>
+                <Users size={18} />
+                <span>Crowd</span>
+              </button>
+              <button className="menu-row" onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
+                <Video size={18} />
+                <span>Live</span>
+              </button>
+              <label className="menu-row toggle-row">
+                <SlidersHorizontal size={18} />
+                <span>Control</span>
+                <input type="checkbox" checked={autoScan} onChange={(event) => setAutoScan(event.target.checked)} />
+              </label>
             </div>
-          </div>
 
-          <div className="ask-box">
-            <input value={question} onChange={(event) => setQuestion(event.target.value)} />
-            <button onClick={() => void askConsultant(question)}>Ask</button>
-          </div>
-
-          <div className="answer">
-            <button className="icon-button" aria-label="Speak answer" onClick={() => speak(answer)}>
-              <Volume2 size={18} />
-            </button>
-            <p>{answer}</p>
-          </div>
-
-          <div className="metrics">
-            <div>
-              <span>Defect flags</span>
-              <strong>{analysis?.summary.defectCount ?? 0}</strong>
-            </div>
-            <div>
-              <span>Detections</span>
-              <strong>{analysis?.detections.length ?? 0}</strong>
-            </div>
-          </div>
-
-          <div className="detections">
-            {(analysis?.detections ?? []).slice(0, 6).map((detection, index) => (
-              <div key={`${detection.label}-${index}`}>
-                <span>{detection.label}</span>
-                <meter min={0} max={1} value={detection.confidence} />
-                <strong>{(detection.confidence * 100).toFixed(0)}%</strong>
+            <div className={`lens-card ${cameraReady || previewImage ? "active" : "idle"}`}>
+              <div className="video-wrap">
+                {previewImage ? (
+                  <img ref={imageRef} src={previewImage} alt="Uploaded inspection target" onLoad={() => drawDetections(analysis?.detections ?? [])} />
+                ) : (
+                  <video ref={videoRef} playsInline muted />
+                )}
+                <canvas ref={overlayRef} className="overlay" />
+                {!cameraReady && !previewImage && (
+                  <button className="start-camera" onClick={startCamera}>
+                    <Camera size={18} /> Start camera
+                  </button>
+                )}
               </div>
-            ))}
+              <canvas ref={canvasRef} hidden />
+              <div className={`lens-chip ${risk}`}>
+                <ShieldAlert size={14} />
+                <span>{defectTrained ? "crack model online" : "smoke-test mode"}</span>
+              </div>
+            </div>
+
+            <div className="chat-stream">
+              <div className="chat-row ai">
+                <div className="avatar blue">AI</div>
+                <p>model loaded: {modelName}</p>
+              </div>
+              <div className="chat-row user">
+                <p>{question}</p>
+                <div className="avatar face">JT</div>
+              </div>
+              <div className="chat-row ai named">
+                <div className="avatar gray">C</div>
+                <div>
+                  <span className="sender">Crackline</span>
+                  <p>{answer}</p>
+                </div>
+              </div>
+              <div className="chat-row ai named">
+                <div className="avatar crimson">R</div>
+                <div>
+                  <span className="sender">Risk mesh</span>
+                  <p>{defectCount ? `${defectCount} defect flag${defectCount === 1 ? "" : "s"} visible` : "no defect flag in the current frame"}</p>
+                </div>
+              </div>
+              <div className="chat-row user compact">
+                <p>{detectionCount ? `${detectionCount} detections / ${confidenceLabel}` : "ready"}</p>
+                <div className="avatar face">JT</div>
+              </div>
+            </div>
+
+            <div className="composer">
+              <input value={question} onChange={(event) => setQuestion(event.target.value)} aria-label="Ask Constructor AI" />
+              <div className="composer-actions">
+                <button aria-label="Upload image" className="round-button add" type="button">
+                  <label>
+                    <Plus size={18} />
+                    <input type="file" accept="image/*" onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) analyzeUploadedImage(file);
+                      event.currentTarget.value = "";
+                    }} />
+                  </label>
+                </button>
+                <button aria-label="Analyze frame" className="round-button" onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
+                  <Play size={17} />
+                </button>
+                <button aria-label="Lock" className="round-button" type="button">
+                  <Lock size={16} />
+                </button>
+                <button aria-label="Voice" className="round-button mic" onClick={startListening} disabled={listening}>
+                  {listening ? <MicOff size={18} /> : <Mic size={18} />}
+                </button>
+                <button aria-label="Ask" className="round-button send" onClick={() => void askConsultant(question)}>
+                  <Send size={17} />
+                </button>
+                <button aria-label="Speak answer" className="round-button" onClick={() => speak(answer)}>
+                  <Volume2 size={17} />
+                </button>
+              </div>
+            </div>
           </div>
-        </aside>
+        </div>
       </section>
     </main>
   );
