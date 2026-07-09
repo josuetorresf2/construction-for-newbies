@@ -71,6 +71,7 @@ const copy = {
     ask: "Ask",
     voice: "Voice",
     speak: "Speak answer",
+    tools: "Inspection tools",
     voiceUnavailable: "Voice recognition is not available in this browser. Try Chrome or Edge.",
   },
   es: {
@@ -99,6 +100,7 @@ const copy = {
     ask: "Preguntar",
     voice: "Voz",
     speak: "Leer respuesta",
+    tools: "Herramientas de inspeccion",
     voiceUnavailable: "El reconocimiento de voz no esta disponible en este navegador. Prueba Chrome o Edge.",
   },
 } satisfies Record<Language, Record<string, string>>;
@@ -124,6 +126,7 @@ function App() {
   const [modelHealth, setModelHealth] = useState<ModelHealth | null>(null);
   const [language, setLanguage] = useState<Language>("en");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [question, setQuestion] = useState(copy.en.defaultQuestion);
   const [answer, setAnswer] = useState(copy.en.readyAnswer);
   const [cameraReady, setCameraReady] = useState(false);
@@ -273,6 +276,8 @@ function App() {
     setAnalysis(null);
     setPreviewImage(null);
     setAutoScan(false);
+    setToolsOpen(false);
+    setSettingsOpen(false);
     setQuestion(t.defaultQuestion);
     setAnswer(t.readyAnswer);
   };
@@ -368,43 +373,56 @@ function App() {
               <RefreshCw size={22} />
             </button>
 
-            <div className="glass-menu">
-              <button className="menu-row active" onClick={startCamera}>
-                <Camera size={18} />
-                <span>{t.startCamera}</span>
-              </button>
-              <label className="menu-row file-row">
-                <ImageUp size={18} />
-                <span>{t.uploadImage}</span>
-                <input type="file" accept="image/*" onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) analyzeUploadedImage(file);
-                  event.currentTarget.value = "";
-                }} />
-              </label>
-              <button className="menu-row" onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
-                <Play size={18} />
-                <span>{t.analyze}</span>
-              </button>
-              <label className="menu-row toggle-row">
-                <SlidersHorizontal size={18} />
-                <span>{t.liveScan}</span>
-                <input type="checkbox" checked={autoScan} onChange={(event) => setAutoScan(event.target.checked)} />
-              </label>
-              <button className="menu-row" onClick={() => setSettingsOpen((open) => !open)}>
-                <Settings size={18} />
-                <span>{t.settings}</span>
-              </button>
-              {settingsOpen && (
-                <div className="settings-panel">
-                  <span>{t.language}</span>
-                  <div className="language-buttons">
-                    <button className={language === "en" ? "selected" : ""} onClick={() => changeLanguage("en")}>{t.english}</button>
-                    <button className={language === "es" ? "selected" : ""} onClick={() => changeLanguage("es")}>{t.spanish}</button>
+            <button className="tools-launcher" aria-label={t.tools} onClick={() => setToolsOpen((open) => !open)}>
+              <SlidersHorizontal size={22} />
+            </button>
+
+            {toolsOpen && (
+              <div className="glass-menu">
+                <button className="menu-row active" onClick={() => {
+                  void startCamera();
+                  setToolsOpen(false);
+                }}>
+                  <Camera size={18} />
+                  <span>{t.startCamera}</span>
+                </button>
+                <label className="menu-row file-row">
+                  <ImageUp size={18} />
+                  <span>{t.uploadImage}</span>
+                  <input type="file" accept="image/*" onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) analyzeUploadedImage(file);
+                    event.currentTarget.value = "";
+                    setToolsOpen(false);
+                  }} />
+                </label>
+                <button className="menu-row" onClick={() => {
+                  void analyzeFrame();
+                  setToolsOpen(false);
+                }} disabled={!cameraReady || busy}>
+                  <Play size={18} />
+                  <span>{t.analyze}</span>
+                </button>
+                <label className="menu-row toggle-row">
+                  <SlidersHorizontal size={18} />
+                  <span>{t.liveScan}</span>
+                  <input type="checkbox" checked={autoScan} onChange={(event) => setAutoScan(event.target.checked)} />
+                </label>
+                <button className="menu-row" onClick={() => setSettingsOpen((open) => !open)}>
+                  <Settings size={18} />
+                  <span>{t.settings}</span>
+                </button>
+                {settingsOpen && (
+                  <div className="settings-panel">
+                    <span>{t.language}</span>
+                    <div className="language-buttons">
+                      <button className={language === "en" ? "selected" : ""} onClick={() => changeLanguage("en")}>{t.english}</button>
+                      <button className={language === "es" ? "selected" : ""} onClick={() => changeLanguage("es")}>{t.spanish}</button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             <div className={`lens-card ${cameraReady || previewImage ? "active" : "idle"}`}>
               <div className="video-wrap">
