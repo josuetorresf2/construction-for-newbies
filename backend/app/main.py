@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -10,8 +12,20 @@ from .vision import decode_data_url, get_analyzer
 
 app = FastAPI(title="Construction for Newbies AI Consultant")
 
+DEFAULT_ALLOWED_ORIGINS = [
+    "https://josuetorresf2.github.io",
+    "https://construction-for-newbies.vercel.app",
+]
+
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", ",".join(DEFAULT_ALLOWED_ORIGINS)).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=allowed_origins,
     allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):\d+$",
     allow_credentials=True,
     allow_methods=["*"],

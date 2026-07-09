@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Camera,
+  CameraOff,
   Download,
   Home,
   ImageUp,
@@ -43,7 +44,13 @@ type ModelHealth = {
 type Language = "en" | "es";
 
 const configuredApiBase = import.meta.env.VITE_API_BASE;
-const API_BASE = configuredApiBase || (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:8000" : "");
+const API_BASE =
+  configuredApiBase ||
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:8000"
+    : window.location.hostname === "construction-for-newbies.vercel.app"
+      ? window.location.origin
+      : "");
 
 const copy = {
   en: {
@@ -80,6 +87,8 @@ const copy = {
     tools: "Inspection tools",
     voiceUnavailable: "Voice recognition is not available in this browser. Try Chrome or Edge.",
     cameraError: "Camera could not start. Check browser permissions, camera access, and HTTPS requirements outside localhost.",
+    cameraStopped: "Camera is off. Start the camera again or upload an image to inspect.",
+    closeCamera: "Close camera",
     backendUnavailable: "Backend is not connected yet. Deploy the API and set VITE_API_BASE to enable live AI detection online.",
   },
   es: {
@@ -116,6 +125,8 @@ const copy = {
     tools: "Herramientas de inspeccion",
     voiceUnavailable: "El reconocimiento de voz no esta disponible en este navegador. Prueba Chrome o Edge.",
     cameraError: "No se pudo iniciar la camara. Revisa permisos del navegador, acceso a la camara y HTTPS fuera de localhost.",
+    cameraStopped: "La camara esta apagada. Inicia la camara otra vez o sube una imagen para inspeccionar.",
+    closeCamera: "Cerrar camara",
     backendUnavailable: "El backend todavia no esta conectado. Despliega la API y configura VITE_API_BASE para activar la deteccion online.",
   },
 } satisfies Record<Language, Record<string, string>>;
@@ -145,6 +156,7 @@ function App() {
   const imageRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [modelHealth, setModelHealth] = useState<ModelHealth | null>(null);
@@ -190,12 +202,44 @@ function App() {
     });
   }, [previewImage]);
 
+  const stopCamera = useCallback((message?: string) => {
+    streamRef.current?.getTracks().forEach((track) => {
+      track.onended = null;
+      track.stop();
+    });
+    streamRef.current = null;
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.srcObject = null;
+    }
+    setCameraReady(false);
+    setAutoScan(false);
+    if (message) setAnswer(message);
+  }, []);
+
+  const isCameraLive = useCallback(() => {
+    const stream = streamRef.current;
+    const video = videoRef.current;
+    return Boolean(
+      stream &&
+        video &&
+        stream.getVideoTracks().some((track) => track.readyState === "live" && track.enabled) &&
+        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+        video.videoWidth > 0
+    );
+  }, []);
+
   const startCamera = async () => {
     try {
       setPreviewImage(null);
+      stopCamera();
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
+      });
+      streamRef.current = stream;
+      stream.getVideoTracks().forEach((track) => {
+        track.onended = () => stopCamera(copy[language].cameraStopped);
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -204,7 +248,7 @@ function App() {
         setAnswer(language === "es" ? "Camara activa. Pulsa analizar imagen o activa escaneo en vivo." : "Camera is active. Press analyze frame or turn on live scan.");
       }
     } catch {
-      setCameraReady(false);
+      stopCamera();
       setAnswer(copy[language].cameraError);
     }
   };
@@ -236,7 +280,11 @@ function App() {
   const analyzeFrame = useCallback(async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || video.videoWidth === 0 || busy) return;
+    if (!video || !canvas || busy) return;
+    if (!isCameraLive()) {
+      stopCamera(copy[language].cameraStopped);
+      return;
+    }
 
     setBusy(true);
     canvas.width = video.videoWidth;
@@ -248,7 +296,7 @@ function App() {
     }
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     await analyzeImageData(canvas.toDataURL("image/jpeg", 0.82));
-  }, [analyzeImageData, busy]);
+  }, [analyzeImageData, busy, isCameraLive, language, stopCamera]);
 
   const analyzeUploadedImage = (file: File) => {
     const reader = new FileReader();
@@ -316,7 +364,7 @@ function App() {
   const resetApp = () => {
     setAnalysis(null);
     setPreviewImage(null);
-    setAutoScan(false);
+    stopCamera();
     setToolsOpen(false);
     setSettingsOpen(false);
     setQuestion("");
@@ -353,6 +401,10 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem("constructor-ai-has-visited", "true");
   }, []);
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, [stopCamera]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
@@ -474,18 +526,18 @@ function App() {
             )}
 
             <div className={`lens-card ${cameraReady || previewImage ? "active" : "idle"}`}>
-              <div className="video-wrap">
-                {previewImage ? (
+              <div className={`video-wrap ${previewImage ? "has-image" : ""}`}>
+                <video ref={videoRef} playsInline muted />
+                {previewImage && (
                   <img ref={imageRef} src={previewImage} alt="Uploaded inspection target" onLoad={() => drawDetections(analysis?.detections ?? [])} />
-                ) : (
-                  <video ref={videoRef} playsInline muted />
                 )}
                 <canvas ref={overlayRef} className="overlay" />
-                {!cameraReady && !previewImage && (
-                  <button className="start-camera" onClick={startCamera}>
-                    <Camera size={18} /> {t.startCamera}
-                  </button>
-                )}
+                <button className="close-camera" aria-label={t.closeCamera} onClick={() => {
+                  setPreviewImage(null);
+                  stopCamera(copy[language].cameraStopped);
+                }}>
+                  <CameraOff size={17} />
+                </button>
               </div>
               <canvas ref={canvasRef} hidden />
               <div className={`lens-chip ${risk}`}>

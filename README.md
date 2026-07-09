@@ -1,6 +1,6 @@
 # Construction for Newbies
 
-**Construction for Newbies** is an AI inspection assistant that uses a YOLO crack-detection model to analyze camera frames or uploaded surface photos, then explains what it sees through a clean chat interface with voice input, speech output, and English/Spanish support.
+**Construction for Newbies** is an AI inspection assistant for camera frames and uploaded surface photos. The repo includes a Docker-ready FastAPI + YOLO crack-detection backend, plus a lightweight hosted Vercel vision API so recruiters and users can try the app online without local setup.
 
 Developer: **Joshue Torres**
 
@@ -9,14 +9,15 @@ Developer: **Joshue Torres**
 - Primary frontend: https://josuetorresf2.github.io/construction-for-newbies/
 - Root mirror: https://josuetorresf2.github.io/
 - Vercel mirror: https://construction-for-newbies.vercel.app/
-- Backend API: deploy with the Render blueprint in this repo, then set the GitHub repository variable `VITE_API_BASE` to the deployed API URL.
+- Online API: https://construction-for-newbies.vercel.app/api/health
 
-The GitHub Pages frontend is public and installable as a PWA. Full AI detection requires a deployed backend because YOLO inference runs server-side.
+The GitHub Pages frontend is public and installable as a PWA. The live demo uses the Vercel online crack-scan API. The full Ultralytics YOLO backend is included for Docker hosts such as Render, Fly.io, or Railway.
 
 ## Product Highlights
 
 - Real-time inspection workflow for construction surfaces.
-- YOLO-powered crack detection using a pretrained crack segmentation model.
+- Hosted crack-scan API for the public demo.
+- YOLO-powered crack detection path using a pretrained crack segmentation model for Docker backend deployments.
 - Camera capture, image upload, live scan mode, and detection overlays.
 - Voice input and spoken answers through browser speech APIs.
 - English and Spanish UI/assistant responses.
@@ -41,7 +42,7 @@ Inspection tools tray:
 | Frontend | React, TypeScript, Vite, PWA manifest/service worker |
 | UI | Custom responsive dark mobile simulator interface, lucide-react icons |
 | Backend | FastAPI, Uvicorn, Pydantic |
-| Computer Vision | Ultralytics YOLO, OpenCV, NumPy |
+| Computer Vision | Hosted crack-scan API for demo, Ultralytics YOLO/OpenCV/NumPy for Docker backend |
 | Model | Pretrained YOLO crack segmentation checkpoint from OpenSistemas |
 | Data | Ultralytics Crack Segmentation dataset |
 | Deployment | GitHub Pages for frontend, Docker/Render blueprint for API |
@@ -80,10 +81,10 @@ render.yaml               Render backend deployment blueprint
 ## How to Use the App
 
 1. Open the app.
-2. Confirm the chat says `crack model online`.
+2. Confirm the chat says crack detection is online.
 3. Tap the floating sliders icon to open inspection tools.
 4. Use `Start camera` for live inspection or `Upload image` for a photo.
-5. Press `Analyze frame` to run YOLO on the current camera frame.
+5. Press `Analyze frame` to inspect the current camera frame.
 6. Enable `Live scan` for repeated camera analysis.
 7. Ask follow-up questions in the chat, by text or microphone.
 8. Use the speaker button to hear the assistant response.

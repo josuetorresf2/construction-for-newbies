@@ -1,13 +1,10 @@
 .venv
 models
-datasets/crack-seg
+datasets
 datasets/crack-seg.zip
 runs
-backend
-scripts
 docs
 .git
 .github
 __pycache__
 *.pyc
-
