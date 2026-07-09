@@ -78,6 +78,7 @@ main {
 }
 
 video,
+.video-wrap img,
 .overlay {
   position: absolute;
   inset: 0;
@@ -123,6 +124,25 @@ video,
 .switch input {
   width: 18px;
   height: 18px;
+}
+
+.upload-button {
+  min-height: 44px;
+  border: 1px solid #3b424a;
+  border-radius: 8px;
+  background: #e7edf3;
+  color: #111315;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.upload-button input {
+  display: none;
 }
 
 .consultant {

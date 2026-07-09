@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Download, Mic, MicOff, Play, ShieldAlert, Volume2 } from "lucide-react";
+import { Camera, Download, ImageUp, Mic, MicOff, Play, ShieldAlert, Volume2 } from "lucide-react";
 
 type Detection = {
   label: string;
@@ -19,6 +19,12 @@ type Analysis = {
   model: string;
 };
 
+type ModelHealth = {
+  ok: boolean;
+  model: string;
+  defectTrained: boolean;
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
 const SpeechRecognitionCtor =
@@ -34,10 +40,12 @@ function speak(text: string) {
 
 function App() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [modelHealth, setModelHealth] = useState<ModelHealth | null>(null);
   const [question, setQuestion] = useState("Do you see cracks or structural defects?");
   const [answer, setAnswer] = useState("Start the camera, then ask about cracks, defects, or next inspection steps.");
   const [cameraReady, setCameraReady] = useState(false);
@@ -46,17 +54,18 @@ function App() {
   const [busy, setBusy] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const drawDetections = useCallback((detections: Detection[]) => {
-    const video = videoRef.current;
     const overlay = overlayRef.current;
-    if (!video || !overlay) return;
+    const source = previewImage ? imageRef.current : videoRef.current;
+    if (!source || !overlay) return;
 
     const context = overlay.getContext("2d");
     if (!context) return;
 
-    overlay.width = video.videoWidth;
-    overlay.height = video.videoHeight;
+    overlay.width = previewImage && imageRef.current ? imageRef.current.naturalWidth : videoRef.current?.videoWidth ?? 0;
+    overlay.height = previewImage && imageRef.current ? imageRef.current.naturalHeight : videoRef.current?.videoHeight ?? 0;
     context.clearRect(0, 0, overlay.width, overlay.height);
     context.lineWidth = 4;
     context.font = "18px Inter, system-ui";
@@ -73,9 +82,10 @@ function App() {
       context.fillStyle = "#101114";
       context.fillText(label, x1 + 7, Math.max(20, y1 - 8));
     });
-  }, []);
+  }, [previewImage]);
 
   const startCamera = async () => {
+    setPreviewImage(null);
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false,
@@ -87,19 +97,7 @@ function App() {
     }
   };
 
-  const analyzeFrame = useCallback(async () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas || video.videoWidth === 0 || busy) return;
-
-    setBusy(true);
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const image = canvas.toDataURL("image/jpeg", 0.82);
-
+  const analyzeImageData = useCallback(async (image: string) => {
     try {
       const response = await fetch(`${API_BASE}/api/analyze-frame`, {
         method: "POST",
@@ -116,7 +114,35 @@ function App() {
     } finally {
       setBusy(false);
     }
-  }, [busy, drawDetections]);
+  }, [drawDetections]);
+
+  const analyzeFrame = useCallback(async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.videoWidth === 0 || busy) return;
+
+    setBusy(true);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setBusy(false);
+      return;
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    await analyzeImageData(canvas.toDataURL("image/jpeg", 0.82));
+  }, [analyzeImageData, busy]);
+
+  const analyzeUploadedImage = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = String(reader.result);
+      setPreviewImage(image);
+      setBusy(true);
+      window.setTimeout(() => void analyzeImageData(image), 50);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const askConsultant = useCallback(
     async (text: string) => {
@@ -126,14 +152,14 @@ function App() {
         body: JSON.stringify({
           question: text,
           detections: analysis?.detections ?? [],
-          defectTrained: analysis?.defectTrained ?? false,
+          defectTrained: analysis?.defectTrained ?? modelHealth?.defectTrained ?? false,
         }),
       });
       const payload = (await response.json()) as { answer: string };
       setAnswer(payload.answer);
       speak(payload.answer);
     },
-    [analysis]
+    [analysis, modelHealth]
   );
 
   const startListening = () => {
@@ -175,6 +201,13 @@ function App() {
   }, [analyzeFrame, autoScan, cameraReady]);
 
   useEffect(() => {
+    fetch(`${API_BASE}/api/health`)
+      .then((response) => response.json())
+      .then((payload: ModelHealth) => setModelHealth(payload))
+      .catch(() => setModelHealth(null));
+  }, []);
+
+  useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
@@ -193,15 +226,21 @@ function App() {
   }, []);
 
   const risk = analysis?.summary.risk ?? "clear";
+  const defectTrained = analysis?.defectTrained ?? modelHealth?.defectTrained ?? false;
+  const modelName = analysis?.model ?? modelHealth?.model ?? "checking model";
 
   return (
     <main>
       <section className="workspace">
         <div className="camera-panel">
           <div className="video-wrap">
-            <video ref={videoRef} playsInline muted />
+            {previewImage ? (
+              <img ref={imageRef} src={previewImage} alt="Uploaded inspection target" onLoad={() => drawDetections(analysis?.detections ?? [])} />
+            ) : (
+              <video ref={videoRef} playsInline muted />
+            )}
             <canvas ref={overlayRef} className="overlay" />
-            {!cameraReady && (
+            {!cameraReady && !previewImage && (
               <button className="start-camera" onClick={startCamera}>
                 <Camera size={22} /> Start camera
               </button>
@@ -212,6 +251,19 @@ function App() {
             <button onClick={() => void analyzeFrame()} disabled={!cameraReady || busy}>
               <Play size={18} /> Analyze frame
             </button>
+            <label className="upload-button">
+              <ImageUp size={18} />
+              Upload image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) analyzeUploadedImage(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
             <label className="switch">
               <input type="checkbox" checked={autoScan} onChange={(event) => setAutoScan(event.target.checked)} />
               <span>Live scan</span>
@@ -240,8 +292,8 @@ function App() {
             <div>
               <strong>{analysis?.summary.headline ?? "Camera inspection consultant"}</strong>
               <span>
-                {analysis?.defectTrained
-                  ? `Custom model active: ${analysis.model}`
+                {defectTrained
+                  ? `Crack model active: ${modelName}`
                   : "Custom defect model missing. Running in smoke-test mode."}
               </span>
             </div>

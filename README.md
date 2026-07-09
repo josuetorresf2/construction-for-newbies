@@ -9,6 +9,7 @@ AI construction and manufacturing defect consultant for webcam or uploaded video
 - `frontend/public/manifest.webmanifest` and `frontend/public/sw.js`: Progressive Web App install support for desktop and mobile browsers.
 - `scripts/train_yolo.py`: custom YOLO training entrypoint for crack and structural-defect datasets.
 - `scripts/download_crack_data.py`: downloads the real Ultralytics crack segmentation dataset.
+- `scripts/download_pretrained_model.py`: downloads a pretrained crack model so the app works immediately.
 - `scripts/export_model.py`: export a trained model to ONNX, OpenVINO, TensorRT, CoreML, and other Ultralytics-supported formats.
 - `datasets/crack-seg.yaml`: default real crack dataset config.
 - `datasets/defects.yaml.example`: YOLO dataset config template.
@@ -63,7 +64,13 @@ mkdir -p models
 cp runs/defect-detection/*/weights/best.pt models/best.pt
 ```
 
-The backend uses `models/best.pt` when present. If it is missing, it can run a pretrained YOLO model only for smoke testing and will label the session as not defect-trained.
+The backend uses `models/best.pt` when present. If it is missing, it can run a generic YOLO model only for smoke testing and will label the session as not defect-trained.
+
+For an immediately functional crack detector, install the default pretrained model:
+
+```bash
+python scripts/download_pretrained_model.py
+```
 
 ## Run the app
 
@@ -72,6 +79,7 @@ Terminal 1:
 ```bash
 cd construction-for-newbies
 source .venv/bin/activate
+python scripts/download_pretrained_model.py
 uvicorn backend.app.main:app --reload --port 8000
 ```
 

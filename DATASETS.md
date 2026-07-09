@@ -33,6 +33,22 @@ mkdir -p models
 cp runs/defect-detection/yolo-crack-seg/weights/best.pt models/best.pt
 ```
 
+## Default Pretrained Model
+
+For a fully functional local app without waiting for training, this repo can download the pretrained `yolov8n` crack segmentation model from OpenSistemas:
+
+- Source: https://huggingface.co/OpenSistemas/YOLOv8-crack-seg
+- License shown on Hugging Face: AGPL-3.0
+- Model path used by the app: `models/best.pt`
+
+Download it with:
+
+```bash
+python scripts/download_pretrained_model.py
+```
+
+The model file is intentionally ignored by Git because it is a downloaded binary. The script makes the install reproducible.
+
 ## Citation
 
 Ultralytics lists this citation for the dataset:
