@@ -53,8 +53,6 @@ const copy = {
     readyAnswer: "I am ready to inspect.",
     startCamera: "Start camera",
     uploadImage: "Upload image",
-    easyExample: "Easy example",
-    hardExample: "Hard example",
     analyze: "Analyze frame",
     liveScan: "Live scan",
     settings: "Settings",
@@ -89,8 +87,6 @@ const copy = {
     readyAnswer: "Estoy listo para inspeccionar.",
     startCamera: "Iniciar camara",
     uploadImage: "Subir imagen",
-    easyExample: "Ejemplo facil",
-    hardExample: "Ejemplo dificil",
     analyze: "Analizar imagen",
     liveScan: "Escaneo en vivo",
     settings: "Ajustes",
@@ -253,21 +249,6 @@ function App() {
       window.setTimeout(() => void analyzeImageData(image), 50);
     };
     reader.readAsDataURL(file);
-  };
-
-  const analyzeExampleImage = async (difficulty: "easy" | "hard") => {
-    setToolsOpen(false);
-    const response = await fetch(`/demo/${difficulty}-crack.jpg`);
-    const blob = await response.blob();
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = String(reader.result);
-      setPreviewImage(image);
-      setCameraReady(false);
-      setBusy(true);
-      window.setTimeout(() => void analyzeImageData(image), 50);
-    };
-    reader.readAsDataURL(blob);
   };
 
   const askConsultant = useCallback(
@@ -447,14 +428,6 @@ function App() {
                     setToolsOpen(false);
                   }} />
                 </label>
-                <button className="menu-row" onClick={() => void analyzeExampleImage("easy")}>
-                  <ImageUp size={18} />
-                  <span>{t.easyExample}</span>
-                </button>
-                <button className="menu-row" onClick={() => void analyzeExampleImage("hard")}>
-                  <ImageUp size={18} />
-                  <span>{t.hardExample}</span>
-                </button>
                 <button className="menu-row" onClick={() => {
                   void analyzeFrame();
                   setToolsOpen(false);

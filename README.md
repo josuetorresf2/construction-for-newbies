@@ -14,14 +14,6 @@ Inspection tools tray:
 
 ![Construction for Newbies inspection tools tray](docs/screenshots/app-tools.png)
 
-Built-in easy example detection:
-
-![Construction for Newbies easy crack detection](docs/screenshots/app-easy-detection.png)
-
-Built-in hard example detection:
-
-![Construction for Newbies hard crack detection](docs/screenshots/app-hard-detection.png)
-
 ## What this repo contains
 
 - `backend/`: FastAPI service for YOLO frame analysis and defect-consultant responses.
@@ -124,14 +116,13 @@ VITE_API_BASE=http://127.0.0.1:8000 npm run dev
 1. Start the backend and frontend using the commands above.
 2. Confirm the app says `crack model online`.
 3. Tap the floating sliders icon to open the inspection tools tray.
-4. Choose `Easy example` or `Hard example` to prove the model works without needing a camera.
-5. Choose `Start camera` for webcam inspection, or `Upload image` to analyze a photo.
-6. Use `Analyze frame` to run YOLO on the current camera frame.
-7. Enable `Live scan` to analyze the camera feed repeatedly.
-8. Type a question in the bottom message box and press the send icon.
-9. Use the microphone icon to ask by voice.
-10. Use the speaker icon to hear the latest answer spoken aloud.
-11. Open `Settings` from the tools tray to switch between English and Spanish.
+4. Choose `Start camera` for webcam inspection, or `Upload image` to analyze a photo.
+5. Use `Analyze frame` to run YOLO on the current camera frame.
+6. Enable `Live scan` to analyze the camera feed repeatedly.
+7. Type a question in the bottom message box and press the send icon.
+8. Use the microphone icon to ask by voice.
+9. Use the speaker icon to hear the latest answer spoken aloud.
+10. Open `Settings` from the tools tray to switch between English and Spanish.
 
 The message input starts empty. The assistant shows a hello message and short instructions inside the chat instead of pre-filling a user message. The app remembers whether the current device has used it before and remembers the selected language using browser local storage.
 
@@ -154,20 +145,6 @@ Example questions:
 - Speaker icon: reads the latest answer aloud.
 - Home icon: clears the current inspection state.
 - Camera icon in the top bar: starts the camera.
-- `Easy example`: loads an obvious crack sample and runs the same YOLO detection pipeline.
-- `Hard example`: loads a more complex real-world crack sample and runs the same YOLO detection pipeline.
-
-## Bundled example images
-
-The app includes two web-sourced example images so users can verify the model immediately:
-
-- Easy example: `Retaining wall failure.jpeg` from Wikimedia Commons, courtesy of G.R. Fisher, U.S. Geological Survey.
-- Hard example: `Concrete wall cracking as its steel reinforcing cracks and swells 9061v.jpg` from Wikimedia Commons by JonRichfield.
-
-Sources:
-
-- https://commons.wikimedia.org/wiki/File:Retaining_wall_failure.jpeg
-- https://commons.wikimedia.org/wiki/File:Concrete_wall_cracking_as_its_steel_reinforcing_cracks_and_swells_9061v.jpg
 
 ## Camera access
 
